@@ -15,7 +15,6 @@ FROM eclipse-temurin:17-jre-alpine
 VOLUME /tmp
 COPY --from=build /workspace/app/target/*.jar app.jar
 
-# Add custom prompt configuration
 RUN echo 'parse_git_branch() {' >> /root/.bashrc && \
     echo '  git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/(\1)/"' >> /root/.bashrc && \
     echo '}' >> /root/.bashrc && \
