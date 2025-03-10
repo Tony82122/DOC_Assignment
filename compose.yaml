@@ -11,6 +11,20 @@ services:
     depends_on:
       - postgres
     restart: always
+    networks:
+      - viatab-network
+
+  frontend:
+    build:
+      context: C:/Users/tony8/WebstormProjects/via_tab
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - viatab-app
+    restart: always
+    networks:
+      - viatab-network
 
   postgres:
     image: 'postgres:latest'
@@ -22,6 +36,12 @@ services:
       - '5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    networks:
+      - viatab-network
 
 volumes:
   postgres-data:
+
+networks:
+  viatab-network:
+    driver: bridge
