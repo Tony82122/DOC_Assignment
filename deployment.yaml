@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: viatab-deployment
+  labels:
+    app: viatab
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: viatab
+  template:
+    metadata:
+      labels:
+        app: viatab
+    spec:
+      containers:
+      - name: viatab
+        image: your-docker-registry/viatab:latest
+        ports:
+        - containerPort: 8080
