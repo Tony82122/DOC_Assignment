@@ -16,6 +16,7 @@ spec:
     spec:
       containers:
       - name: viatab
-        image: your-docker-registry/viatab:latest
+        image: via_tab-viatab-app:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080
