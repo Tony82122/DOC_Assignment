@@ -29,3 +29,8 @@ jobs:
         run: mvn spotbugs:check
       - name: Run PMD
         run: mvn pmd:check
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-quality-reports
+          path: target/site
