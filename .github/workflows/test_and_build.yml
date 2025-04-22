@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 on:
   workflow_dispatch:
   push:
@@ -32,3 +32,44 @@ jobs:
       - name: Build with Maven
         run: mvn -B package -DskipTests --file pom.xml
       - run: mkdir staging && cp target/*.jar staging
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Package
+          path: staging
+
+  docker-build-and-push:
+    needs: build
+    name: Build and Push Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: Package
+          path: staging
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/viatab:${{ github.sha }} .
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push image to DockerHub
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/viatab:${{ github.sha }}
+
+  deploy-to-minikube:
+    needs: docker-build-and-push
+    name: Deploy to Minikube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start minikube
+        uses: medyagh/setup-minikube@master
+      - name: Deploy to minikube
+        run: |
+          minikube kubectl -- apply -f deployment.yaml
+          minikube kubectl -- apply -f service.yaml
+      - name: Update deployment image
+        run: |
+          minikube kubectl -- set image deployment/viatab-deployment viatab=${{ secrets.DOCKERHUB_USERNAME }}/viatab:${{ github.sha }}
