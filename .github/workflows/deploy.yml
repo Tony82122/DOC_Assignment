@@ -19,6 +19,9 @@ jobs:
       - name: Start minikube
         uses: medyagh/setup-minikube@master
       
+      - name: Lowercase the repo name
+        run: echo "REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      
       - name: Deploy to minikube
         run: |
           echo "Applying deployment and service"
@@ -28,7 +31,7 @@ jobs:
       - name: Update deployment image
         run: |
           echo "Updating deployment image"
-          minikube kubectl -- set image deployment/viatab-deployment viatab=${{ secrets.DOCKERHUB_USERNAME }}/viatab:${{ github.sha }}
+          minikube kubectl -- set image deployment/viatab-deployment viatab=ghcr.io/${{ env.REPO_NAME }}:${{ github.sha }}
       
       - name: Verify deployment
         run: |
