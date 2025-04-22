@@ -1,37 +1,38 @@
-name: Deploy
+name: Deploy to Minikube
 
 on:
-  workflow_dispatch:
   workflow_run:
-    workflows: ["Test and Build"]
+    workflows: ["Test, Build, and Push"]
     types:
       - completed
+  workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  deploy-to-minikube:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    
+    name: Deploy to Minikube
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Download artifact
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        artifacts_url=$(curl -H "Authorization: Bearer $GITHUB_TOKEN" \
-          https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts \
-          | jq -r '.artifacts[0].archive_download_url')
-        
-        curl -L -H "Authorization: Bearer $GITHUB_TOKEN" -o artifact.zip "$artifacts_url"
-        unzip artifact.zip -d artifacts
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-    - name: Display structure of downloaded files
-      run: ls -R artifacts
-        
-    - name: Deploy to server
-      run: |
-        echo "Deploying application..."
-        # Add your deployment steps here
-        # This could involve copying files to a server, updating a Docker container, etc.
-        echo "Deployment completed"
+      - name: Start minikube
+        uses: medyagh/setup-minikube@master
+      
+      - name: Deploy to minikube
+        run: |
+          echo "Applying deployment and service"
+          minikube kubectl -- apply -f deployment.yaml
+          minikube kubectl -- apply -f service.yaml
+      
+      - name: Update deployment image
+        run: |
+          echo "Updating deployment image"
+          minikube kubectl -- set image deployment/viatab-deployment viatab=${{ secrets.DOCKERHUB_USERNAME }}/viatab:${{ github.sha }}
+      
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment"
+          minikube kubectl -- get deployments
+          minikube kubectl -- get pods
+          minikube kubectl -- get services
