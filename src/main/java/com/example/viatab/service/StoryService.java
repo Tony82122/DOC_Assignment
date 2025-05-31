@@ -42,6 +42,12 @@ public class StoryService {
                 .filter(story -> story.getDepartment().equalsIgnoreCase(department))
                 .toList();
     }
+    public List<Story> getTopStories() {
+
+        return getAllStories().stream()
+                .limit(2)
+                .toList();
+    }
 
     public Story updateStory(Long id, Story storyDetails) {
         if (stories.containsKey(id)) {

@@ -8,11 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("stories")
-@CrossOrigin(origins = "*") 
-public class StoryController { 
+@RequestMapping("/stories")
+@CrossOrigin(origins = "http://localhost:3000")
+public class StoryController {
 
     private final StoryService storyService;
 
@@ -21,55 +22,37 @@ public class StoryController {
         this.storyService = storyService;
     }
 
-@GetMapping(produces = "text/html")
-public String getAllStories() {
-    List<Story> stories = storyService.getAllStories();
-
-    StringBuilder htmlBuilder = new StringBuilder();
-    htmlBuilder.append("<body bgcolor=\"#9FE2BF\">")
-            .append("<h1>Today at VIA</h1>")
-            .append("<nav>")
-            .append("<a href=\"/stories\">All Stories</a> | ")
-            .append("<a href=\"/stories/top\">Top Stories</a>")
-            .append("</nav>")
-            .append("<section>")
-            .append("<h2>All Stories VIA</h2>");
-
-    for (Story story : stories) {
-        htmlBuilder.append("<div style=\"margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;\">")
-                .append("<h3>").append(story.getTitle()).append("</h3>")
-                .append("<p><span style=\"color: blue;\">Department:</span> ").append(story.getDepartment()).append("</p>")
-                .append("<p>").append(story.getContent()).append("</p>")
-                .append("</div>");
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getAllStories() {
+        List<Story> stories = storyService.getAllStories();
+        Map<String, Object> response = Map.of(
+            "title", "Today at VIA",
+            "navLinks", List.of(
+                Map.of("text", "All Stories", "href", "/stories"),
+                Map.of("text", "Top Stories", "href", "/stories/top")
+            ),
+            "pageTitle", "All Stories VIA",
+            "stories", stories
+        );
+        return ResponseEntity.ok(response);
     }
 
-    htmlBuilder.append("</section>")
-            .append("</body>");
-
-    return htmlBuilder.toString();
-}
-
-@GetMapping(value = "/top", produces = "text/html")
-public String topStories() {
-    return "<body bgcolor=\"#9FE2BF\">" +
-           "<h1>Assignment</h1> " +
-           "<nav>" +
-           "<a href=\"/stories\">All Stories</a> | " +
-           "<a href=\"/stories/top\">Top Stories</a>" +
-           "</nav>" +
-           "<h2>VIA STUFF.</h2> " +
-           "<section> " +
-           "<h2>Top Stories</h2> " +
-           "<p> discover our <span style=\"color: blue;\">featured stories</span> here...</p> " +
-           "</section>" +
-           "<p>Featured stories</p> " +
-           "<ul> " +
-           "<li>Top story 1</li> " +
-           "<li>Top story 2</li> " +
-           "</ul>" +
-           "</body>";
-}
-
+    @GetMapping("/top")
+    public ResponseEntity<Map<String, Object>> getTopStories() {
+        List<Story> topStories = storyService.getTopStories();
+        Map<String, Object> response = Map.of(
+            "title", "Assignment",
+            "navLinks", List.of(
+                Map.of("text", "All Stories", "href", "/stories"),
+                Map.of("text", "Top Stories", "href", "/stories/top")
+            ),
+            "pageTitle", "VIA STUFF",
+            "sectionTitle", "Top Stories",
+            "sectionContent", "Discover our featured stories here...",
+            "featuredStories", topStories
+        );
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Story> getStoryById(@PathVariable Long id) {
